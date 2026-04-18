@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+
+  # ===== MySQL =====
+  db:
+    image: mysql:8.0
+    container_name: board-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_DATABASE: boarddb
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql         # 데이터 영구 보존
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql  # 초기화 SQL
+    networks:
+      - board-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot1234"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ===== Spring Boot Backend =====
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: board-backend
+    restart: always
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: boarddb
+      DB_USER: root
+      DB_PASSWORD: root1234
+      JWT_SECRET: boardAppSecretKey2024VeryLongSecretKeyForJWTSigning
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy   # DB 헬스체크 통과 후 시작
+    networks:
+      - board-network
+
+  # ===== React Frontend (Nginx) =====
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: board-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - board-network
+
+# ===== 볼륨 =====
+volumes:
+  mysql-data:
+    name: board-mysql-data
+
+# ===== 네트워크 =====
+networks:
+  board-network:
+    name: board-network
+    driver: bridge
