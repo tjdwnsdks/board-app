@@ -14,8 +14,9 @@ public class JwtTokenProvider {
     private final long expiration;
 
     public JwtTokenProvider(
-            @Value("${jwt.secret}") String secret,
-            @Value("${jwt.expiration}") long expiration) {
+            @Value("${jwt.secret:boardAppSecretKey2024VeryLongSecretKeyForJWTSigning}") String secret,
+            @Value("${jwt.expiration:86400000}") long expiration) {
+
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
         this.expiration = expiration;
     }
@@ -23,6 +24,7 @@ public class JwtTokenProvider {
     public String generateToken(String username) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expiration);
+
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(now)
