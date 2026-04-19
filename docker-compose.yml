@@ -12,11 +12,15 @@ services:
       MYSQL_DATABASE: boarddb
       MYSQL_CHARACTER_SET_SERVER: utf8mb4
       MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --init-connect=SET NAMES utf8mb4
     ports:
       - "3306:3306"
     volumes:
-      - mysql-data:/var/lib/mysql         # 데이터 영구 보존
-      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql  # 초기화 SQL
+      - mysql-data:/var/lib/mysql    # 데이터 영구 보존
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql   # 초기화 SQL
     networks:
       - board-network
     healthcheck:
@@ -44,7 +48,7 @@ services:
       - "8080:8080"
     depends_on:
       db:
-        condition: service_healthy   # DB 헬스체크 통과 후 시작
+        condition: service_healthy    # DB 헬스체크 통과 후 시작
     networks:
       - board-network
 
